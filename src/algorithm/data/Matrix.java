@@ -1,10 +1,9 @@
 package algorithm.data;
 
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.DecompositionSolver;
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.*;
 
+import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -178,10 +177,90 @@ public class Matrix {
 
         double total = 0.0;
 
-        for (int i = 0; i < expected.getColumnDimension(); i++) {
-            total += Math.abs(expected.getEntry(0, i) - received.getEntry(0, i));
+        for (int i = 0; i < expected.getRowDimension(); i++) {
+            total += Math.abs(expected.getEntry(i, 0) - received.getEntry(i, 0));
         }
 
-        return total/expected.getColumnDimension();
+        return 100*total/expected.getRowDimension();
+    }
+
+    public static RealMatrix randPerm(RealMatrix m) {
+        double[][] data = m.getData();
+        double[][] randData = new double[data.length][data[0].length];
+
+        ArrayList<double[]> dataArr = new ArrayList<>();
+
+        for (int i = 0; i < data.length; i++) {
+            dataArr.add(data[i]);
+        }
+
+        int j = 0;
+
+        while (dataArr.size() > 0) {
+            int rand = (int) Math.floor(Math.random() * dataArr.size());
+            randData[j] = dataArr.get(rand);
+            dataArr.remove(rand);
+            j++;
+        }
+
+        return new Array2DRowRealMatrix(randData);
+    }
+
+    public static RealMatrix fromCsv(String fileName) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(fileName));
+
+        double[][] data = null;
+
+        try {
+            String line = br.readLine().replaceAll("[\\t| ]+", "\t");
+            int x = line.replaceAll("[\\t| ]+", "\t").replaceAll("^\t", "").split("\t").length;
+
+            StringBuilder sb = new StringBuilder();
+
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+
+            String[] lines = sb.toString().split(System.lineSeparator());
+
+            int y = lines.length;
+
+            data = new double[y][x];
+
+            for (int i = 0; i < lines.length; i++) {
+                String[] l = lines[i].replaceAll("[\\t| ]+", "\t").replaceAll("^\t", "").split("\t");
+
+                for (int j = 0; j < l.length; j++) {
+                    data[i][j] = Double.parseDouble(l[j]);
+                }
+            }
+        }
+        finally {
+            try {
+                br.close();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return new Array2DRowRealMatrix(data);
+    }
+
+    public static double twoNorm(RealMatrix A) {
+        double max = 0.0;
+
+        RealMatrix AtA = A.transpose().multiply(A);
+
+        EigenDecomposition eigenDecomposition = new EigenDecomposition(AtA);
+        double[] eigenvalues = eigenDecomposition.getRealEigenvalues();
+
+        for (int i = 0; i < eigenvalues.length; i++) {
+            double val = Math.sqrt(eigenvalues[i]);
+            if (val > max) max = val;
+        }
+        return max;
     }
 }

@@ -1,5 +1,9 @@
 package algorithm.algorithms;
 
+import algorithm.Graph;
+import algorithm.data.Features;
+import algorithm.data.Matrix;
+import algorithm.io.XMLParser;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 
@@ -51,9 +55,11 @@ public class KMeans {
                 }
             }
 
-            //Clear out clusters for new iteration
-            for (int k = 0; k < means.length; k++) {
-                clusters[k] = new ArrayList<>();
+            if (i+1 != iterations) {
+                //Clear out clusters for new iteration
+                for (int k = 0; k < means.length; k++) {
+                    clusters[k] = new ArrayList<>();
+                }
             }
         }
 
@@ -84,5 +90,32 @@ public class KMeans {
             total += (a[i] - b[i]) * (a[i] - b[i]);
 
         return Math.sqrt(total);
+    }
+
+    public static void main(String[] arg) {
+        Features data = XMLParser.extractFeatures("KMeansTest.xml");
+
+        ArrayList<String> songNames = data.getSongNames();
+        RealMatrix m = null;
+        try {
+            m = data.toMatrixAll(songNames.get(0));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        for (String songName : songNames) {
+            try {
+                m = Matrix.concat(m, data.toMatrixAll(songName));
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        RealMatrix means = KMeans.KMeans(m, 10, 100);
+
+        Graph graph = new Graph(means.getColumnMatrix(0), means.getColumnMatrix(1) ,m.getColumnMatrix(0), m.getColumnMatrix(1));
+        graph.pack();
+        graph.setVisible(true);
     }
 }

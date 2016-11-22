@@ -34,6 +34,9 @@ public class Algorithm {
         }
 
         try {
+            //runRegression();
+            //halfTest();
+            //nineTenthTrainingTest();
             tenFoldValidate();
         } catch (Exception e) {
             e.printStackTrace();
@@ -82,18 +85,20 @@ public class Algorithm {
         return Y;
     }
 
-    private RealMatrix getmappedMatrix(Features features, VAMap map, ArrayList<String> songNames) throws Exception {
+    private RealMatrix getmappedMatrix(Features features, VAMap valence, VAMap arousal, ArrayList<String> songNames) throws Exception {
         RealMatrix M = null;
         for (String songName : songNames) {
             try {
                 RealMatrix Y = features.toMatrixAll(songName);
                 Y = Y.getSubMatrix(30,Y.getRowDimension()-1,0,Y.getColumnDimension()-1); //Line only here because result data is limited as such
 
-                RealMatrix Z = map.getAverageMatrix(songName);
+                RealMatrix Z = valence.getAverageMatrix(songName);
+                RealMatrix Z2 = arousal.getAverageMatrix(songName);
 
                 if (Z.getRowDimension() != Y.getRowDimension()) continue;
 
                 Y = Matrix.addColumn(Y, Z.getColumn(0));
+                Y =Matrix.addColumn(Y, Z2.getColumn(0));
 
                 if (M == null) M = Y;
                 else
@@ -125,6 +130,100 @@ public class Algorithm {
         System.out.println(Matrix.error(aNorm, aTest));
 
         Graph graph = new Graph(vNorm, vTest, aNorm, aTest);
+        graph.pack();
+        graph.setVisible(true);
+    }
+
+    private void halfTest() throws Exception {
+        setupMatrices();
+
+        outToMatlab(Y, valence, "valence");
+        //outToMatlab(Y, arousal, "arousal");
+
+        Y = Matrix.addColumn(Y, 1.0);
+        Y = Matrix.normalise(Y);
+
+        RealMatrix vNorm = Matrix.normalise(valence);
+        RealMatrix aNorm = Matrix.normalise(arousal);
+
+        RealMatrix Ytr = new Array2DRowRealMatrix(Y.getRowDimension()/2, Y.getColumnDimension());
+        RealMatrix Yts = new Array2DRowRealMatrix(Y.getRowDimension()/2, Y.getColumnDimension());
+        RealMatrix atr = new Array2DRowRealMatrix(Y.getRowDimension()/2, 1);
+        RealMatrix ats = new Array2DRowRealMatrix(Y.getRowDimension()/2, 1);
+        RealMatrix vtr = new Array2DRowRealMatrix(Y.getRowDimension()/2, 1);
+        RealMatrix vts = new Array2DRowRealMatrix(Y.getRowDimension()/2, 1);
+
+        for (int i = 0; i < 2*(Y.getRowDimension()/2); i++) {
+            if (i < Y.getRowDimension()/2) {
+                Ytr.setRow(i, Y.getRow(i));
+                atr.setRow(i, aNorm.getRow(i));
+                vtr.setRow(i, vNorm.getRow(i));
+            }
+            else {
+                int j = i - Y.getRowDimension()/2;
+                Yts.setRow(j, Y.getRow(i));
+                ats.setRow(j, aNorm.getRow(i));
+                vts.setRow(j, vNorm.getRow(i));
+            }
+        }
+
+        //RealMatrix vTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr);
+        //RealMatrix aTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr);
+
+        RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 10);
+        RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 10);
+
+        System.out.println("Valence error: " + Matrix.error(vts, vTest));
+        System.out.println("Arousal error: " + Matrix.error(ats, aTest));
+
+        Graph graph = new Graph(vts, vTest, ats, aTest);
+        graph.pack();
+        graph.setVisible(true);
+    }
+
+    private void nineTenthTrainingTest() throws Exception {
+        setupMatrices();
+
+        outToMatlab(Y, valence, "valence");
+        //outToMatlab(Y, arousal, "arousal");
+
+        Y = Matrix.addColumn(Y, 1.0);
+        Y = Matrix.normalise(Y);
+
+        RealMatrix vNorm = Matrix.normalise(valence);
+        RealMatrix aNorm = Matrix.normalise(arousal);
+
+        RealMatrix Ytr = new Array2DRowRealMatrix(9*Y.getRowDimension()/10, Y.getColumnDimension());
+        RealMatrix Yts = new Array2DRowRealMatrix(Y.getRowDimension()/10, Y.getColumnDimension());
+        RealMatrix atr = new Array2DRowRealMatrix(9*Y.getRowDimension()/10, 1);
+        RealMatrix ats = new Array2DRowRealMatrix(Y.getRowDimension()/10, 1);
+        RealMatrix vtr = new Array2DRowRealMatrix(9*Y.getRowDimension()/10, 1);
+        RealMatrix vts = new Array2DRowRealMatrix(Y.getRowDimension()/10, 1);
+
+        for (int i = 0; i < 10*(Y.getRowDimension()/10); i++) {
+            if (i < 9*Y.getRowDimension()/10) {
+                Ytr.setRow(i, Y.getRow(i));
+                atr.setRow(i, aNorm.getRow(i));
+                vtr.setRow(i, vNorm.getRow(i));
+            }
+            else {
+                int j = i - 9*Y.getRowDimension()/10;
+                Yts.setRow(j, Y.getRow(i));
+                ats.setRow(j, aNorm.getRow(i));
+                vts.setRow(j, vNorm.getRow(i));
+            }
+        }
+
+        //RealMatrix vTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr);
+        //RealMatrix aTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr);
+
+        RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 10);
+        RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 10);
+
+        System.out.println("Valence error: " + Matrix.error(vts, vTest));
+        System.out.println("Arousal error: " + Matrix.error(ats, aTest));
+
+        Graph graph = new Graph(vts, vTest, ats, aTest);
         graph.pack();
         graph.setVisible(true);
     }
@@ -193,12 +292,12 @@ public class Algorithm {
         ArrayList<String> songNames = data.getSongNames();
         songNames.retainAll(resultSongs);
 
-        RealMatrix Yvalence = getmappedMatrix(data, valenceResults, songNames);
-        RealMatrix Yarousal = getmappedMatrix(data, arousalResults, songNames);
+        RealMatrix mapped = Matrix.randPerm(getmappedMatrix(data, valenceResults, arousalResults, songNames));
+        //RealMatrix mapped = getmappedMatrix(data, valenceResults, arousalResults, songNames);
 
-        Y = Yarousal.getSubMatrix(0, Yarousal.getRowDimension()-1, 0, Yarousal.getColumnDimension()-2);
-        arousal = Yarousal.getSubMatrix(0, Yarousal.getRowDimension()-1, Yarousal.getColumnDimension()-1, Yarousal.getColumnDimension()-1);
-        valence = Yvalence.getSubMatrix(0, Yvalence.getRowDimension()-1, Yvalence.getColumnDimension()-1, Yvalence.getColumnDimension()-1);
+        Y = mapped.getSubMatrix(0, mapped.getRowDimension()-1, 0, mapped.getColumnDimension()-3);
+        valence = mapped.getSubMatrix(0, mapped.getRowDimension()-1, mapped.getColumnDimension()-2, mapped.getColumnDimension()-2);
+        arousal = mapped.getSubMatrix(0, mapped.getRowDimension()-1, mapped.getColumnDimension()-1, mapped.getColumnDimension()-1);
     }
 
     private void outToMatlab(RealMatrix data, RealMatrix expected, String filename) {
@@ -216,7 +315,73 @@ public class Algorithm {
 
     }
 
+    private static void runWithCsv(String filename) throws Exception {
+        RealMatrix m = Matrix.fromCsv(filename);
+
+        m = Matrix.randPerm(m);
+
+        RealMatrix Y = m.getSubMatrix(0,m.getRowDimension()-1,0,m.getColumnDimension()-2);
+        RealMatrix target = m.getColumnMatrix(m.getColumnDimension()-1);
+
+        Y = Matrix.addColumn(Y, 1.0);
+        Y = Matrix.normalise(Y);
+
+        RealMatrix tNorm = Matrix.normalise(target);
+
+        int p = Y.getColumnDimension();
+        int N = Y.getRowDimension() - (Y.getRowDimension()%10);
+
+        RealMatrix Ytr = new Array2DRowRealMatrix((9*(int)Math.floor(N/10)), p);
+        RealMatrix Yts = new Array2DRowRealMatrix((int)Math.floor(N/10), p);
+        RealMatrix ttr = new Array2DRowRealMatrix((9*(int)Math.floor(N/10)), 1);
+        RealMatrix tts = new Array2DRowRealMatrix((int)Math.floor(N/10), 1);
+
+        double totalError = 0.0;
+
+       // for (int i = 0; i < 10; i++) {
+        int i = 0;
+
+            int start = i * (int)Math.floor(N/10);
+            int end = (i+1) * (int)Math.floor(N/10);
+            int k = 0;
+
+            for (int j = 0; j < N; j++) {
+                if (j >= start && j < end) {
+                    Yts.setRow(k, Y.getRow(j));
+                    tts.setEntry(k,0,tNorm.getEntry(j,0));
+                    k++;
+                }
+                else if (j < start) {
+                    Ytr.setRow(j, Y.getRow(j));
+                    ttr.setEntry(j,0,tNorm.getEntry(j,0));
+                }
+                else {
+                    int t = j - k;
+                    Ytr.setRow(t, Y.getRow(t));
+                    ttr.setEntry(t,0,tNorm.getEntry(t,0));
+                }
+            }
+            RealMatrix predicted = RBF.radialBasisFunctions(Ytr, Yts, ttr, 10);
+            totalError += Matrix.error(tts, predicted);
+
+            //totalaError += Matrix.error(ats, LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr));
+            //totalvError += Matrix.error(vts, LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr));
+
+            Graph graph = new Graph(tts, predicted, tts, predicted);
+            graph.pack();
+            graph.setVisible(true);
+       // }
+
+        System.out.println("Average error: " + totalError);
+        //System.out.println("Average error: " + totalError/10);
+    }
+
     public static void main(String[] args) {
-        new Algorithm();
+        //new Algorithm();
+        try {
+            runWithCsv("housing.data");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

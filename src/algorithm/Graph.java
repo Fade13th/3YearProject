@@ -41,8 +41,10 @@ public class Graph extends ApplicationFrame {
         final XYSeriesCollection dataset = new XYSeriesCollection( );
         final XYSeries valence = new XYSeries("valence");
         final XYSeries arousal = new XYSeries("arousal");
-        for (int i = 0; i < xaD.length; i++) {
+        for (int i = 0; i < xvD.length; i++) {
             valence.add(xvD[i], yvD[i]);
+        }
+        for (int i = 0; i < xaD.length; i++) {
             arousal.add(xaD[i], yaD[i]);
         }
         dataset.addSeries(valence);
