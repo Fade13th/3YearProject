@@ -35,9 +35,9 @@ public class Algorithm {
 
         try {
             //runRegression();
-            //halfTest();
+            halfTest();
             //nineTenthTrainingTest();
-            tenFoldValidate();
+            //tenFoldValidate();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -137,7 +137,7 @@ public class Algorithm {
     private void halfTest() throws Exception {
         setupMatrices();
 
-        outToMatlab(Y, valence, "valence");
+        //outToMatlab(Y, valence, "valence");
         //outToMatlab(Y, arousal, "arousal");
 
         Y = Matrix.addColumn(Y, 1.0);
@@ -184,7 +184,7 @@ public class Algorithm {
     private void nineTenthTrainingTest() throws Exception {
         setupMatrices();
 
-        outToMatlab(Y, valence, "valence");
+        //outToMatlab(Y, valence, "valence");
         //outToMatlab(Y, arousal, "arousal");
 
         Y = Matrix.addColumn(Y, 1.0);
@@ -217,8 +217,8 @@ public class Algorithm {
         //RealMatrix vTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr);
         //RealMatrix aTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr);
 
-        RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 10);
-        RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 10);
+        RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 50);
+        RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 50);
 
         System.out.println("Valence error: " + Matrix.error(vts, vTest));
         System.out.println("Arousal error: " + Matrix.error(ats, aTest));
@@ -377,11 +377,12 @@ public class Algorithm {
     }
 
     public static void main(String[] args) {
-        //new Algorithm();
+        new Algorithm();
+        /*
         try {
             runWithCsv("housing.data");
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 }

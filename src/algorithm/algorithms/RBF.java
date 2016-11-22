@@ -12,15 +12,10 @@ public class RBF {
         int Ntr = Ytr.getRowDimension();
         int Nts = Yts.getRowDimension();
 
-        double[] rowA = Ytr.getRow((int)Math.floor(Math.random()*Ntr));
-        double[] rowB = Ytr.getRow((int)Math.floor(Math.random()*Ntr));
+        RealMatrix rowA = Ytr.getRowMatrix((int)Math.floor(Math.random()*Ntr));
+        RealMatrix rowB = Ytr.getRowMatrix((int)Math.floor(Math.random()*Ntr));
 
-        double total = 0.0;
-
-        for (int i = 0; i < rowA.length; i++)
-            total += (rowA[i] - rowB[i]) * (rowA[i] - rowB[i]);
-
-        double sigma = Math.sqrt(total);
+        double sigma = Matrix.twoNorm(rowA.subtract(rowB));
 
         RealMatrix C = KMeans.KMeans(Ytr, K, 100);
 
@@ -28,12 +23,10 @@ public class RBF {
 
         for (int i = 0; i < Ntr; i++) {
             for (int j = 0; j < K; j++) {
-                double tot = 0.0;
-                for (int k = 0; k < C.getColumnDimension(); k++) {
-                    tot += (Ytr.getEntry(i, k) - C.getEntry(j, k)) * (Ytr.getEntry(i, k) - C.getEntry(j, k));
-                }
+                RealMatrix ytri = Ytr.getRowMatrix(i);
+                RealMatrix cj = C.getRowMatrix(j);
 
-                A.setEntry(i, j, Math.exp(-Math.sqrt(tot)/(sigma*sigma)));
+                A.setEntry(i, j, Math.exp(-Matrix.twoNorm(ytri.subtract(cj))/(sigma*sigma)));
             }
         }
 
@@ -44,11 +37,10 @@ public class RBF {
 
         for (int i = 0; i < Nts; i++) {
             for (int j = 0; j < K; j++) {
-                double tot = 0.0;
-                for (int k = 0; k < Yts.getColumnDimension(); k++) {
-                    tot += (Yts.getEntry(i, k) - C.getEntry(j, k)) * (Yts.getEntry(i, k) - C.getEntry(j, k));
-                }
-                u.setEntry(j, 0, Math.exp(-Math.sqrt(tot)));
+                RealMatrix ytri = Ytr.getRowMatrix(i);
+                RealMatrix cj = C.getRowMatrix(j);
+
+                u.setEntry(j, 0, Math.exp(-Matrix.twoNorm(ytri.subtract(cj))/(sigma*sigma)));
             }
             yh.setEntry(i, 0, lambda.transpose().multiply(u).getEntry(0,0));
         }
