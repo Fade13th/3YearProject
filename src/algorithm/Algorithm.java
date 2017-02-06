@@ -143,8 +143,10 @@ public class Algorithm {
         Y = Matrix.addColumn(Y, 1.0);
         Y = Matrix.normalise(Y);
 
-        RealMatrix vNorm = Matrix.normalise(valence);
-        RealMatrix aNorm = Matrix.normalise(arousal);
+        //RealMatrix vNorm = Matrix.normalise(valence);
+        //RealMatrix aNorm = Matrix.normalise(arousal);
+        RealMatrix vNorm = valence;
+        RealMatrix aNorm = arousal;
 
         RealMatrix Ytr = new Array2DRowRealMatrix(Y.getRowDimension()/2, Y.getColumnDimension());
         RealMatrix Yts = new Array2DRowRealMatrix(Y.getRowDimension()/2, Y.getColumnDimension());
@@ -167,11 +169,14 @@ public class Algorithm {
             }
         }
 
-        //RealMatrix vTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr);
-        //RealMatrix aTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr);
+        //RealMatrix vTest = SVM.selfOptimizingLinearLibSVM(Ytr, Yts, vtr);
+        //RealMatrix aTest = SVM.selfOptimizingLinearLibSVM(Ytr, Yts, atr);
 
-        RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 10);
-        RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 10);
+        RealMatrix vTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr);
+        RealMatrix aTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr);
+
+        //RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 10);
+        //RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 10);
 
         System.out.println("Valence error: " + Matrix.error(vts, vTest));
         System.out.println("Arousal error: " + Matrix.error(ats, aTest));

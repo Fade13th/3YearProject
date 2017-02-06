@@ -9,6 +9,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -27,6 +29,9 @@ public class VAMap {
         HashMap<String, HashMap<String, ArrayList<Double>>> result = new HashMap<>();
 
         Reader in = null;
+
+        DecimalFormat df = new DecimalFormat("#.#;-#");
+        df.setRoundingMode(RoundingMode.CEILING);
         try {
             in = new FileReader(filename);
             Iterator<CSVRecord> records = CSVFormat.RFC4180.parse(in).iterator();
@@ -40,7 +45,7 @@ public class VAMap {
                 ArrayList<Double> values = new ArrayList<>();
 
                 for (int i = 1; i < record.size(); i++) {
-                    values.add(Double.valueOf(record.get(i)));
+                    values.add(Double.valueOf(df.format(Double.valueOf(record.get(i)))));
                 }
                 songs.put(record.get(0), values);
             }
