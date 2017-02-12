@@ -1,4 +1,4 @@
-package algorithm.algorithms;
+package backEnd.algorithms;
 
 import libsvm.*;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
