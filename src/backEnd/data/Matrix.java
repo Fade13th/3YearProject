@@ -206,6 +206,43 @@ public class Matrix {
         return new Array2DRowRealMatrix(randData);
     }
 
+    //Intended to work with data, valence, arousal array
+    public static RealMatrix[] randPerm(RealMatrix[] marr) {
+        double[][] data = marr[0].getData();
+        double[][] randData = new double[data.length][data[0].length];
+        double[][] val = marr[1].getData();
+        double[][] randVal = new double[val.length][val[0].length];
+        double[][] aro = marr[2].getData();
+        double[][] randAro = new double[aro.length][aro[0].length];
+
+        ArrayList<double[]> dataArr = new ArrayList<>();
+        ArrayList<double[]> valArr = new ArrayList<>();
+        ArrayList<double[]> aroArr = new ArrayList<>();
+
+        for (int i = 0; i < data.length; i++) {
+            dataArr.add(data[i]);
+            valArr.add(val[i]);
+            aroArr.add(aro[i]);
+        }
+
+        int j = 0;
+
+        while (dataArr.size() > 0) {
+            int rand = (int) Math.floor(Math.random() * dataArr.size());
+            randData[j] = dataArr.get(rand);
+            randVal[j] = valArr.get(rand);
+            randAro[j] = aroArr.get(rand);
+
+            dataArr.remove(rand);
+            valArr.remove(rand);
+            aroArr.remove(rand);
+            j++;
+        }
+
+        return new RealMatrix[]{new Array2DRowRealMatrix(randData), new Array2DRowRealMatrix(randVal), new Array2DRowRealMatrix(randAro)};
+    }
+
+
     public static RealMatrix fromCsv(String fileName) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(fileName));
 

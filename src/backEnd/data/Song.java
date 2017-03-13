@@ -18,6 +18,10 @@ public class Song {
         this.data = getDataFromCsv(new File("features/default/" + name + ".csv"));
     }
 
+    public String getName() { return name; }
+
+    public RealMatrix getData() { return data; }
+
     public Song(File file, Boolean training) {
         String name = file.getName().substring(0, file.getName().lastIndexOf("."));
 

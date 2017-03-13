@@ -2,9 +2,11 @@ package backEnd;
 
 import backEnd.algorithms.LeastSquaresRegression;
 import backEnd.algorithms.RBF;
+import backEnd.algorithms.SVM;
 import backEnd.data.Features;
 import backEnd.data.Matrix;
 import backEnd.data.VAMap;
+import backEnd.extractor.SongOrganiser;
 import backEnd.io.XMLParser;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -18,21 +20,9 @@ import java.util.ArrayList;
  * Created by Matt on 2016-11-12.
  */
 public class Algorithm {
-    Features data;
-    VAMap valenceResults;
-    VAMap arousalResults;
-
     RealMatrix Y, arousal, valence;
 
     public Algorithm() {
-        data = XMLParser.extractFeatures("values.xml");
-        try {
-            valenceResults = new VAMap("valence_cont_average.csv");
-            arousalResults = new VAMap("arousal_cont_average.csv");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         try {
             //runRegression();
             halfTest();
@@ -141,7 +131,7 @@ public class Algorithm {
         //outToMatlab(Y, arousal, "arousal");
 
         Y = Matrix.addColumn(Y, 1.0);
-        Y = Matrix.normalise(Y);
+       // Y = Matrix.normalise(Y);
 
         //RealMatrix vNorm = Matrix.normalise(valence);
         //RealMatrix aNorm = Matrix.normalise(arousal);
@@ -173,15 +163,15 @@ public class Algorithm {
         //RealMatrix aTest = SVM.selfOptimizingLinearLibSVM(Ytr, Yts, atr);
 
         RealMatrix vTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr);
-        RealMatrix aTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr);
+        //RealMatrix aTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr);
 
         //RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 10);
         //RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 10);
 
         System.out.println("Valence error: " + Matrix.error(vts, vTest));
-        System.out.println("Arousal error: " + Matrix.error(ats, aTest));
+        //System.out.println("Arousal error: " + Matrix.error(ats, aTest));
 
-        Graph graph = new Graph(vts, vTest, ats, aTest);
+        Graph graph = new Graph(vts, vTest, vts, vTest);
         graph.pack();
         graph.setVisible(true);
     }
@@ -222,13 +212,16 @@ public class Algorithm {
         //RealMatrix vTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr);
         //RealMatrix aTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr);
 
-        RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 50);
-        RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 50);
+        //RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 50);
+        //RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 50);
+
+        RealMatrix vTest = SVM.selfOptimizingLinearLibSVM(Ytr, Yts, vtr);
+        //RealMatrix aTest = SVM.selfOptimizingLinearLibSVM(Ytr, Yts, atr);
 
         System.out.println("Valence error: " + Matrix.error(vts, vTest));
-        System.out.println("Arousal error: " + Matrix.error(ats, aTest));
+        //System.out.println("Arousal error: " + Matrix.error(ats, aTest));
 
-        Graph graph = new Graph(vts, vTest, ats, aTest);
+        Graph graph = new Graph(vts, vTest, vts, vTest);
         graph.pack();
         graph.setVisible(true);
     }
@@ -293,16 +286,12 @@ public class Algorithm {
     }
 
     private void setupMatrices() throws Exception {
-        ArrayList<String> resultSongs = valenceResults.getSongNames();
-        ArrayList<String> songNames = data.getSongNames();
-        songNames.retainAll(resultSongs);
+        SongOrganiser so = new SongOrganiser();
+        RealMatrix[] allData = Matrix.randPerm(so.getMatrices());
 
-        RealMatrix mapped = Matrix.randPerm(getmappedMatrix(data, valenceResults, arousalResults, songNames));
-        //RealMatrix mapped = getmappedMatrix(data, valenceResults, arousalResults, songNames);
-
-        Y = mapped.getSubMatrix(0, mapped.getRowDimension()-1, 0, mapped.getColumnDimension()-3);
-        valence = mapped.getSubMatrix(0, mapped.getRowDimension()-1, mapped.getColumnDimension()-2, mapped.getColumnDimension()-2);
-        arousal = mapped.getSubMatrix(0, mapped.getRowDimension()-1, mapped.getColumnDimension()-1, mapped.getColumnDimension()-1);
+        this.Y = allData[0];
+        this.valence = allData[1];
+        this.arousal = allData[2];
     }
 
     private void outToMatlab(RealMatrix data, RealMatrix expected, String filename) {
