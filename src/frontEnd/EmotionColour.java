@@ -8,6 +8,7 @@ public class EmotionColour {
         public float R;
         public float G;
         public float B;
+        public float alpha = 1;
 
         public Colour(float R, float G, float B) {
             this.R = R;

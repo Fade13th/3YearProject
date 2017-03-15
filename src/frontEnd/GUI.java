@@ -26,6 +26,8 @@ public class GUI {
         GLCapabilities glcapabilities = new GLCapabilities( glprofile );
         final GLCanvas glcanvas = new GLCanvas( glcapabilities );
 
+        GUIPanel guiPanel = new BarPanel();
+
         glcanvas.addGLEventListener( new GLEventListener() {
 
             @Override
@@ -43,16 +45,18 @@ public class GUI {
 
             @Override
             public void display( GLAutoDrawable glautodrawable ) {
-                BarPanel.render( glautodrawable.getGL().getGL2(), glautodrawable.getSurfaceWidth(), glautodrawable.getSurfaceHeight() );
+                guiPanel.clear(glautodrawable.getGL().getGL2());
+                guiPanel.render( glautodrawable.getGL().getGL2(), glautodrawable.getSurfaceWidth(), glautodrawable.getSurfaceHeight() );
+                guiPanel.renderPrevious(glautodrawable.getGL().getGL2(), glautodrawable.getSurfaceWidth(), glautodrawable.getSurfaceHeight(), guiPanel);
             }
         });
 
         ArrayList<ArrayList<Float>> song = loadChroma();
         ArrayList<ArrayList<Float>> vaScores = loadVAtemp();
 
-        BarPanel.values = song.get(0);
-        BarPanel.colour = new EmotionColour(vaScores.get(0).get(0), vaScores.get(0).get(1));
-        BarPanel.targetColour = new EmotionColour(vaScores.get(0).get(0), vaScores.get(0).get(1));
+        guiPanel.values = song.get(0);
+        guiPanel.colour = new EmotionColour(vaScores.get(0).get(0), vaScores.get(0).get(1));
+        guiPanel.targetColour = new EmotionColour(vaScores.get(0).get(0), vaScores.get(0).get(1));
 
         final JFrame jframe = new JFrame( "One Triangle Swing GLCanvas" );
         jframe.addWindowListener( new WindowAdapter() {
@@ -75,8 +79,10 @@ public class GUI {
             @Override
             public void run() {
                 if (iter.hasNext()) {
-                    BarPanel.values = iter.next();
+                    ArrayList<Float> i = iter.next();
+                    guiPanel.values = i;
                     glcanvas.display();
+                    guiPanel.updatePreviousValues(i);
                 }
                 else t.cancel();
             }
@@ -90,7 +96,9 @@ public class GUI {
             public void run() {
                 if (iterator.hasNext()) {
                     ArrayList<Float> scores = iterator.next();
-                    BarPanel.targetColour = new EmotionColour(scores.get(0), scores.get(1));
+                    EmotionColour c = new EmotionColour(scores.get(0), scores.get(1));
+                    guiPanel.targetColour = c;
+                    guiPanel.updatePreviousColours(c);
                 }
                 else t.cancel();
             }
