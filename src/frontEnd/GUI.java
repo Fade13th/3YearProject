@@ -5,6 +5,10 @@ import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.awt.GLCanvas;
+import frontEnd.Panels.BarPanel;
+import frontEnd.Panels.GUIPanel;
+import frontEnd.Panels.SplinePanel;
+
 import javax.swing.JFrame;
 
 import java.awt.BorderLayout;
@@ -15,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by matt on 12/03/17.
@@ -26,7 +29,7 @@ public class GUI {
         GLCapabilities glcapabilities = new GLCapabilities( glprofile );
         final GLCanvas glcanvas = new GLCanvas( glcapabilities );
 
-        GUIPanel guiPanel = new BarPanel();
+        GUIPanel guiPanel = new SplinePanel();
 
         glcanvas.addGLEventListener( new GLEventListener() {
 

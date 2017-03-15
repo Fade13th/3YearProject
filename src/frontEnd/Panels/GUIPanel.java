@@ -1,8 +1,9 @@
-package frontEnd;
+package frontEnd.Panels;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.glu.GLU;
+import frontEnd.EmotionColour;
 
 import java.util.ArrayList;
 
@@ -10,7 +11,7 @@ import java.util.ArrayList;
  * Created by matt on 15/03/17.
  */
 public abstract class GUIPanel {
-    protected static  EmotionColour targetColour;
+    public static EmotionColour targetColour;
     protected static float blendStep = 0.005f;
 
     protected static ArrayList<ArrayList<Float>> previousValues;
@@ -18,9 +19,9 @@ public abstract class GUIPanel {
     protected static final int previous = 5;
 
     public static ArrayList<Float> values;
-    protected static EmotionColour colour;
+    public static EmotionColour colour;
 
-    protected static void setup(GL2 gl2, int width, int height ) {
+    public static void setup(GL2 gl2, int width, int height ) {
         previousColours = new ArrayList<>();
         previousValues = new ArrayList<>();
 
@@ -37,14 +38,14 @@ public abstract class GUIPanel {
         gl2.glViewport( 0, 0, width, height );
     }
 
-    protected static void clear(GL2 gl2) {
+    public static void clear(GL2 gl2) {
         gl2.glClearColor(colour.bgColour.R, colour.bgColour.G, colour.bgColour.B, 1.0f);
         gl2.glClear(GL.GL_COLOR_BUFFER_BIT);
     }
 
-    protected abstract void render( GL2 gl2, int screenWidth, int screenHeight);
+    public abstract void render( GL2 gl2, int screenWidth, int screenHeight);
 
-    protected static void renderPrevious(GL2 gl2, int screenWidth, int screenHeight, GUIPanel guiPanel) {
+    public static void renderPrevious(GL2 gl2, int screenWidth, int screenHeight, GUIPanel guiPanel) {
         for (int i = 0; i < previousColours.size(); i++) {
             guiPanel.values = previousValues.get(i);
             guiPanel.colour = previousColours.get(i);
@@ -52,7 +53,7 @@ public abstract class GUIPanel {
         }
     }
 
-    protected static void updatePreviousValues(ArrayList<Float> nextValues) {
+    public static void updatePreviousValues(ArrayList<Float> nextValues) {
         if (previousValues.size() < previous) {
             previousValues.add(nextValues);
         }
@@ -62,7 +63,7 @@ public abstract class GUIPanel {
         }
     }
 
-    protected static void updatePreviousColours(EmotionColour nextColour) {
+    public static void updatePreviousColours(EmotionColour nextColour) {
         if (previousColours.size() < previous) {
             previousColours.add(nextColour);
         }

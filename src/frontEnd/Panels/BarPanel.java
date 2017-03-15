@@ -1,16 +1,14 @@
-package frontEnd;
+package frontEnd.Panels;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
-import com.jogamp.opengl.glu.GLU;
-
-import java.util.ArrayList;
+import frontEnd.EmotionColour;
 
 /**
  * Created by matt on 12/03/17.
  */
 public class BarPanel extends GUIPanel {
-    protected void render( GL2 gl2, int screenWidth, int screenHeight) {
+    public void render( GL2 gl2, int screenWidth, int screenHeight) {
         EmotionColour colour = blendColours();
 
         float barWidth = screenWidth/36;
