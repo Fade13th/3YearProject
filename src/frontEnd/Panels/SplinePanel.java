@@ -46,37 +46,23 @@ public class SplinePanel extends GUIPanel {
             gl2.glColor4f(colour.fgColour.R, colour.fgColour.G, colour.fgColour.B, colour.fgColour.alpha);
 
             gl2.glVertex2f(posA, point + (diffBefore * 0.5f));
-            if (diffBefore < 0) {
+
                 gl2.glVertex2f(posA + (space), point + (diffBefore * 0.45f));
                 gl2.glVertex2f(posA + (space * 2), point + (diffBefore * 0.4f));
                 gl2.glVertex2f(posA + (space * 3), point + (diffBefore * 0.25f));
                 gl2.glVertex2f(posA + (space * 4), point + (diffBefore * 0.1f));
                 gl2.glVertex2f(posA + (space * 5), point + (diffBefore * 0.05f));
-            }
-            else {
-                gl2.glVertex2f(posA + (space), point + (diffBefore * 0.05f));
-                gl2.glVertex2f(posA + (space * 2), point + (diffBefore * 0.1f));
-                gl2.glVertex2f(posA + (space * 3), point + (diffBefore * 0.25f));
-                gl2.glVertex2f(posA + (space * 4), point + (diffBefore * 0.4f));
-                gl2.glVertex2f(posA + (space * 5), point + (diffBefore * 0.45f));
-            }
+
 
             gl2.glVertex2f(posB, point);
 
-            if (diffAfter > 0) {
-                gl2.glVertex2f(posB + (space), point + (diffAfter * 0.45f));
-                gl2.glVertex2f(posB + (space * 2), point + (diffAfter * 0.4f));
-                gl2.glVertex2f(posB + (space * 3), point + (diffAfter * 0.25f));
-                gl2.glVertex2f(posB + (space * 4), point + (diffAfter * 0.1f));
-                gl2.glVertex2f(posB + (space * 5), point + (diffAfter * 0.05f));
-            }
-            else {
+
                 gl2.glVertex2f(posB + (space), point + (diffAfter * 0.05f));
                 gl2.glVertex2f(posB + (space * 2), point + (diffAfter * 0.1f));
                 gl2.glVertex2f(posB + (space * 3), point + (diffAfter * 0.25f));
                 gl2.glVertex2f(posB + (space * 4), point + (diffAfter * 0.4f));
                 gl2.glVertex2f(posB + (space * 5), point + (diffAfter * 0.45f));
-            }
+
             gl2.glVertex2f(posC, point + (diffAfter * 0.5f));
 
             prevPoint = point;

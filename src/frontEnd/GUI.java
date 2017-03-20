@@ -7,11 +7,14 @@ import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.awt.GLCanvas;
 import frontEnd.Panels.BarPanel;
 import frontEnd.Panels.GUIPanel;
+import frontEnd.Panels.SplineMirrorPanel;
 import frontEnd.Panels.SplinePanel;
 
-import javax.swing.JFrame;
+import javax.swing.*;
 
-import java.awt.BorderLayout;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
@@ -29,7 +32,7 @@ public class GUI {
         GLCapabilities glcapabilities = new GLCapabilities( glprofile );
         final GLCanvas glcanvas = new GLCanvas( glcapabilities );
 
-        GUIPanel guiPanel = new SplinePanel();
+        GUIPanel guiPanel = new SplineMirrorPanel();
 
         glcanvas.addGLEventListener( new GLEventListener() {
 
@@ -69,7 +72,15 @@ public class GUI {
             }
         });
 
-        jframe.getContentPane().add( glcanvas, BorderLayout.CENTER );
+        jframe.setJMenuBar(setupMenu());
+
+        Container pane = jframe.getContentPane();
+
+        JPanel playOptions = setupPlayOptions();
+
+        pane.add( glcanvas, BorderLayout.CENTER );
+        pane.add(playOptions, BorderLayout.SOUTH);
+
         jframe.setSize( 640, 480 );
         jframe.setVisible( true );
 
@@ -106,6 +117,68 @@ public class GUI {
                 else t.cancel();
             }
         }, 15000, 500);
+    }
+
+    private static JPanel setupPlayOptions() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(1, 3));
+
+        JPanel volume = new JPanel();
+        JSlider vol = new JSlider();
+        volume.add(vol);
+
+        JPanel playButtons = new JPanel();
+
+        JButton rewind = new JButton("<<");
+        rewind.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        JButton playPause = new JButton("> ||");
+        playPause.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        JButton stop = new JButton("[]");
+        stop.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+
+        playButtons.add(rewind);
+        playButtons.add(playPause);
+        playButtons.add(stop);
+
+        panel.add(volume);
+        panel.add(playButtons);
+        panel.add(new JPanel());
+
+        return panel;
+    }
+
+    private static JMenuBar setupMenu() {
+        JMenuBar menu = new JMenuBar();
+
+        JMenu fileMenu = new JMenu("File");
+
+        JMenuItem load = new JMenuItem("Load...");
+        load.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Click");
+            }
+        });
+
+        fileMenu.add(load);
+
+        menu.add(fileMenu);
+        return menu;
     }
 
     private static ArrayList<ArrayList<Float>> loadChroma() {
