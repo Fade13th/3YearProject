@@ -5,12 +5,11 @@ import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.awt.GLCanvas;
-import frontEnd.Panels.BarPanel;
-import frontEnd.Panels.GUIPanel;
-import frontEnd.Panels.SplineMirrorPanel;
-import frontEnd.Panels.SplinePanel;
+import frontEnd.Panels.*;
+import javafx.stage.FileChooser;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -27,14 +26,23 @@ import java.util.TimerTask;
  * Created by matt on 12/03/17.
  */
 public class GUI {
+
+    static GUIPanel guiPanel;
+    static GLCanvas glCanvas;
+
+    static boolean songLoaded = false;
+
+    static Timer t= new Timer();
+
     public static void main( String [] args ) {
+
         GLProfile glprofile = GLProfile.getDefault();
         GLCapabilities glcapabilities = new GLCapabilities( glprofile );
-        final GLCanvas glcanvas = new GLCanvas( glcapabilities );
+        glCanvas = new GLCanvas( glcapabilities );
 
-        GUIPanel guiPanel = new SplineMirrorPanel();
+        setPanelType(Panels.SPLINE_PANEL_MIRROR);
 
-        glcanvas.addGLEventListener( new GLEventListener() {
+        glCanvas.addGLEventListener( new GLEventListener() {
 
             @Override
             public void reshape( GLAutoDrawable glautodrawable, int x, int y, int width, int height ) {
@@ -51,18 +59,13 @@ public class GUI {
 
             @Override
             public void display( GLAutoDrawable glautodrawable ) {
-                guiPanel.clear(glautodrawable.getGL().getGL2());
-                guiPanel.render( glautodrawable.getGL().getGL2(), glautodrawable.getSurfaceWidth(), glautodrawable.getSurfaceHeight() );
-                guiPanel.renderPrevious(glautodrawable.getGL().getGL2(), glautodrawable.getSurfaceWidth(), glautodrawable.getSurfaceHeight(), guiPanel);
+                if (songLoaded) {
+                    guiPanel.clear(glautodrawable.getGL().getGL2());
+                    guiPanel.render(glautodrawable.getGL().getGL2(), glautodrawable.getSurfaceWidth(), glautodrawable.getSurfaceHeight());
+                    guiPanel.renderPrevious(glautodrawable.getGL().getGL2(), glautodrawable.getSurfaceWidth(), glautodrawable.getSurfaceHeight(), guiPanel);
+                }
             }
         });
-
-        ArrayList<ArrayList<Float>> song = loadChroma();
-        ArrayList<ArrayList<Float>> vaScores = loadVAtemp();
-
-        guiPanel.values = song.get(0);
-        guiPanel.colour = new EmotionColour(vaScores.get(0).get(0), vaScores.get(0).get(1));
-        guiPanel.targetColour = new EmotionColour(vaScores.get(0).get(0), vaScores.get(0).get(1));
 
         final JFrame jframe = new JFrame( "One Triangle Swing GLCanvas" );
         jframe.addWindowListener( new WindowAdapter() {
@@ -78,45 +81,11 @@ public class GUI {
 
         JPanel playOptions = setupPlayOptions();
 
-        pane.add( glcanvas, BorderLayout.CENTER );
+        pane.add( glCanvas, BorderLayout.CENTER );
         pane.add(playOptions, BorderLayout.SOUTH);
 
         jframe.setSize( 640, 480 );
         jframe.setVisible( true );
-
-        Timer t= new Timer();
-
-        Iterator<ArrayList<Float>> iter = song.iterator();
-
-        t.scheduleAtFixedRate(new TimerTask() {
-
-            @Override
-            public void run() {
-                if (iter.hasNext()) {
-                    ArrayList<Float> i = iter.next();
-                    guiPanel.values = i;
-                    glcanvas.display();
-                    guiPanel.updatePreviousValues(i);
-                }
-                else t.cancel();
-            }
-        }, 0, 25);
-
-        Iterator<ArrayList<Float>> iterator = vaScores.iterator();
-
-        t.scheduleAtFixedRate(new TimerTask() {
-
-            @Override
-            public void run() {
-                if (iterator.hasNext()) {
-                    ArrayList<Float> scores = iterator.next();
-                    EmotionColour c = new EmotionColour(scores.get(0), scores.get(1));
-                    guiPanel.targetColour = c;
-                    guiPanel.updatePreviousColours(c);
-                }
-                else t.cancel();
-            }
-        }, 15000, 500);
     }
 
     private static JPanel setupPlayOptions() {
@@ -171,21 +140,183 @@ public class GUI {
         load.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Click");
+                JFileChooser chooser = new JFileChooser();
+                chooser.setCurrentDirectory(new File("clips_45seconds"));
+
+                FileNameExtensionFilter ff = new FileNameExtensionFilter("Wav files", "wav");
+                chooser.setFileFilter(ff);
+
+                int returnVal = chooser.showOpenDialog(null);
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    File selected = chooser.getSelectedFile();
+                    try {
+                        loadSong(selected);
+                    }
+                    catch (FileNotFoundException e1) {
+                        e1.printStackTrace();
+                    }
+                }
             }
         });
 
+        JMenu panelSubmenu = new JMenu("Visualisation");
+
+        JMenuItem bars = new JMenuItem("Bars");
+        bars.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setPanelType(Panels.BAR_PANEL);
+            }
+        });
+        JMenuItem barsMirror = new JMenuItem("Bars Mirrored");
+        barsMirror.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setPanelType(Panels.BAR_PANEL_MIRROR);
+            }
+        });
+        JMenuItem spline = new JMenuItem("Waves");
+        spline.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setPanelType(Panels.SPLINE_PANEL);
+            }
+        });
+        JMenuItem splineMirror = new JMenuItem("Waves Mirrored");
+        splineMirror.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setPanelType(Panels.SPLINE_PANEL_MIRROR);
+            }
+        });
+
+        panelSubmenu.add(bars);
+        panelSubmenu.add(barsMirror);
+        panelSubmenu.add(spline);
+        panelSubmenu.add(splineMirror);
+
         fileMenu.add(load);
+        fileMenu.add(panelSubmenu);
 
         menu.add(fileMenu);
         return menu;
     }
 
-    private static ArrayList<ArrayList<Float>> loadChroma() {
+    private static void setPanelType(Panels type) {
+        switch (type) {
+            case BAR_PANEL:
+                guiPanel = new BarPanel();
+                break;
+
+            case BAR_PANEL_MIRROR:
+                guiPanel = new BarPanelMirrored();
+                break;
+
+            case SPLINE_PANEL:
+                guiPanel = new SplinePanel();
+                break;
+
+            case SPLINE_PANEL_MIRROR:
+                guiPanel = new SplineMirrorPanel();
+                break;
+
+            default:
+                guiPanel = new SplineMirrorPanel();
+                break;
+        }
+    }
+
+    private static void extractChroma(String fileName) throws IOException {
+        Runtime rt = Runtime.getRuntime();
+
+        Process pr = rt.exec("./openSMILE-2.1.0/SMILExtract -C openSMILE-2.1.0/chroma_fft.conf -I "
+                + fileName + " -O chroma" + File.separator + fileName.substring(fileName.lastIndexOf(File.separator), fileName.lastIndexOf(".")) + ".csv");
+        try {
+            pr.waitFor();
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void loadSong(File songFile) throws FileNotFoundException {
+        songLoaded = false;
+
+        t.cancel();
+        t.purge();
+        t = new Timer();
+
+        guiPanel.clearPrevious();
+
+        String name = songFile.getName().replace(".wav", "");
+
+        File va = new File("VA" + File.separator + name + ".csv");
+        File chroma = new File("chroma" + File.separator + name + ".csv");
+
+        if (!va.exists()) {
+            throw new FileNotFoundException("Song has not been through valence arousal analysis");
+        }
+
+        if (!chroma.exists()) {
+            try {
+                extractChroma(songFile.getAbsolutePath());
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        ArrayList<ArrayList<Float>> song = loadChroma(chroma);
+        ArrayList<ArrayList<Float>> vaScores = loadVA(va);
+
+        guiPanel.values = song.get(0);
+        guiPanel.colour = new EmotionColour(vaScores.get(0).get(0), vaScores.get(0).get(1));
+        guiPanel.targetColour = new EmotionColour(vaScores.get(0).get(0), vaScores.get(0).get(1));
+
+        Iterator<ArrayList<Float>> iter = song.iterator();
+
+        t.scheduleAtFixedRate(new TimerTask() {
+
+            @Override
+            public void run() {
+                if (iter.hasNext()) {
+                    ArrayList<Float> i = iter.next();
+                    guiPanel.values = i;
+                    glCanvas.display();
+                    guiPanel.updatePreviousValues(i);
+                }
+                else t.cancel();
+            }
+        }, 0, 25);
+
+        Iterator<ArrayList<Float>> iterator = vaScores.iterator();
+
+        t.scheduleAtFixedRate(new TimerTask() {
+
+            @Override
+            public void run() {
+                if (iterator.hasNext()) {
+                    ArrayList<Float> scores = iterator.next();
+                    EmotionColour c = new EmotionColour(scores.get(0), scores.get(1));
+                    guiPanel.targetColour = c;
+                    guiPanel.updatePreviousColours(c);
+                }
+                else t.cancel();
+            }
+        }, 0, 500);
+
+        songLoaded = true;
+    }
+
+    private static ArrayList<ArrayList<Float>> loadChroma(File file) throws FileNotFoundException {
         ArrayList<ArrayList<Float>> song = new ArrayList<>();
 
+        if (!file.exists()) {
+            throw new FileNotFoundException("Chroma features for file "  + file.getName() + " not found");
+        }
+
         try {
-            BufferedReader in = new BufferedReader(new FileReader(new File("chroma.csv")));
+            BufferedReader in = new BufferedReader(new FileReader(file));
 
             String line = null;
 
@@ -211,8 +342,12 @@ public class GUI {
         return song;
     }
 
-    private static ArrayList<ArrayList<Float>> loadVAtemp() {
+    private static ArrayList<ArrayList<Float>> loadVA(File file) throws FileNotFoundException {
         ArrayList<ArrayList<Float>> song = new ArrayList<>();
+
+        if (!file.exists()) {
+            throw new FileNotFoundException("Chroma features for file "  + file.getName() + " not found");
+        }
 
         float valenceMin = Float.MAX_VALUE;
         float valenceMax = Float.MIN_VALUE;
@@ -221,7 +356,7 @@ public class GUI {
         float arousalMax = Float.MIN_VALUE;
 
         try {
-            BufferedReader in = new BufferedReader(new FileReader(new File("VAtemp.csv")));
+            BufferedReader in = new BufferedReader(new FileReader(file));
 
             String line = in.readLine();
 
