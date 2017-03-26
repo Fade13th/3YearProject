@@ -1,5 +1,6 @@
 package frontEnd;
 
+import Util.Config;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.GLProfile;
@@ -35,6 +36,8 @@ public class GUI {
     static Timer t= new Timer();
 
     public static void main( String [] args ) {
+        Config.init();
+        ColourMapping.init();
 
         GLProfile glprofile = GLProfile.getDefault();
         GLCapabilities glcapabilities = new GLCapabilities( glprofile );
@@ -67,7 +70,7 @@ public class GUI {
             }
         });
 
-        final JFrame jframe = new JFrame( "One Triangle Swing GLCanvas" );
+        final JFrame jframe = new JFrame( "V A visualisation" );
         jframe.addWindowListener( new WindowAdapter() {
             public void windowClosing( WindowEvent windowevent ) {
                 jframe.dispose();
@@ -229,8 +232,8 @@ public class GUI {
     private static void extractChroma(String fileName) throws IOException {
         Runtime rt = Runtime.getRuntime();
 
-        Process pr = rt.exec("./openSMILE-2.1.0/SMILExtract -C openSMILE-2.1.0/chroma_fft.conf -I "
-                + fileName + " -O chroma" + File.separator + fileName.substring(fileName.lastIndexOf(File.separator), fileName.lastIndexOf(".")) + ".csv");
+        Process pr = rt.exec("./openSMILE-2.1.0/SMILExtract -C " + Config.CHROMA_CONFIG + " -I "
+                + fileName + " -O " + Config.CHRMOA + File.separator + fileName.substring(fileName.lastIndexOf(File.separator), fileName.lastIndexOf(".")) + ".csv");
         try {
             pr.waitFor();
         }
@@ -250,8 +253,8 @@ public class GUI {
 
         String name = songFile.getName().replace(".wav", "");
 
-        File va = new File("VA" + File.separator + name + ".csv");
-        File chroma = new File("chroma" + File.separator + name + ".csv");
+        File va = new File(Config.V_A_SCORES + File.separator + name + ".csv");
+        File chroma = new File(Config.CHRMOA + File.separator + name + ".csv");
 
         if (!va.exists()) {
             throw new FileNotFoundException("Song has not been through valence arousal analysis");

@@ -3,6 +3,7 @@ package frontEnd.Panels;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.glu.GLU;
+import frontEnd.Colour;
 import frontEnd.EmotionColour;
 
 import java.util.ArrayList;
@@ -39,8 +40,14 @@ public abstract class GUIPanel {
     }
 
     public static void clear(GL2 gl2) {
-        gl2.glClearColor(colour.bgColour.R, colour.bgColour.G, colour.bgColour.B, 1.0f);
+        Colour bg = averageBackground();
+        gl2.glClearColor(bg.R, bg.G, bg.B, 1.0f);
         gl2.glClear(GL.GL_COLOR_BUFFER_BIT);
+    }
+
+    public static void clearPrevious() {
+        previousColours.clear();
+        previousValues.clear();
     }
 
     public abstract void render( GL2 gl2, int screenWidth, int screenHeight);
@@ -130,4 +137,19 @@ public abstract class GUIPanel {
 
         return colour;
     }
+
+    private static Colour averageBackground() {
+        float r = 0;
+        float g = 0;
+        float b = 0;
+
+        for (int i = 0; i < previousColours.size(); i++) {
+            r += previousColours.get(i).bgColour.R;
+            g += previousColours.get(i).bgColour.G;
+            b += previousColours.get(i).bgColour.B;
+        }
+
+        return new Colour(r/previousColours.size(), g/previousColours.size(), b/previousColours.size());
+    }
 }
+

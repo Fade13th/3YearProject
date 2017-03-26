@@ -1,5 +1,6 @@
 package backEnd;
 
+import Util.Config;
 import backEnd.algorithms.LeastSquaresRegression;
 import backEnd.algorithms.RBF;
 import backEnd.algorithms.SVM;
@@ -371,6 +372,7 @@ public class Algorithm {
     }
 
     public static void main(String[] args) {
+        Config.init();
         new Algorithm();
         /*
         try {

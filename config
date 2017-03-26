@@ -1,0 +1,6 @@
+colourMap:colourMap.conf
+chroma:chroma
+VA:VA
+features:features
+chromaConf:openSMILE-2.1.0/chroma_fft.conf
+mfccConfig:openSMILE-2.1.0/mfcc.conf
