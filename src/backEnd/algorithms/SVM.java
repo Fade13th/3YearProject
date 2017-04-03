@@ -10,7 +10,6 @@ import org.apache.commons.math3.linear.RealMatrix;
 public class SVM {
     private static svm_parameter param;
     private static svm_problem prob;
-    private static svm_model model;
 
     private static RealMatrix inTr;
     private static RealMatrix outTr;
@@ -28,6 +27,8 @@ public class SVM {
         param.eps = 1e-3;
         param.shrinking = 1;
         param.probability = 0;
+
+        System.out.println("SVM param setup complete");
     }
 
     private static void setupProb() {
@@ -58,6 +59,8 @@ public class SVM {
         }
 
         prob.y = outTr.getColumn(0);
+
+        System.out.println("SVM problem setup complete");
     }
 
     private static void setup() {
@@ -66,21 +69,30 @@ public class SVM {
 
         if(param.gamma == 0 && max_index > 0)
             param.gamma = 1.0/max_index;
+
+        System.out.println("SVM setup complete");
     }
 
-    public static RealMatrix selfOptimizingLinearLibSVM(RealMatrix Ytr, RealMatrix Yts, RealMatrix expected) {
+    public static svm_model selfOptimizingLinearLibSVM(RealMatrix Ytr, RealMatrix expected) {
         inTr = Ytr;
         outTr = expected;
         setup();
 
         svm.svm_check_parameter(prob, param);
 
-        model = svm.svm_train(prob,param);
 
-        double[] predictions = new double[Ytr.getRowDimension()];
+        System.out.println("SVM training begin...");
+        svm_model model = svm.svm_train(prob, param);
+        System.out.println("SVM training complete");
 
-        for (int i = 0; i < Yts.getRowDimension(); i++) {
-            double[] row = Yts.getRow(i);
+        return model;
+    }
+
+    public static RealMatrix testModel(RealMatrix testSet, svm_model model) {
+        double[] predictions = new double[testSet.getRowDimension()];
+
+        for (int i = 0; i < testSet.getRowDimension(); i++) {
+            double[] row = testSet.getRow(i);
             svm_node[] nodes = new svm_node[row.length + 1];
 
             int j;
@@ -95,7 +107,9 @@ public class SVM {
             n.value = 0;
             nodes[j] = n;
 
+            System.out.println("SVM prediction begin...");
             predictions[i] = svm.svm_predict(model, nodes);
+            System.out.println("SVM prediction complete");
         }
 
         return new Array2DRowRealMatrix(predictions);

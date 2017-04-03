@@ -46,8 +46,4 @@ public class FeatureExtractor {
         Runtime rt = Runtime.getRuntime();
         Process pr = rt.exec("./openSMILE-2.1.0/SMILExtract -C " + Config.MFCC_CONFIG + " -I " + file.getAbsolutePath() + " -O " + out + File.separator + file.getName().substring(0, file.getName().lastIndexOf(".")) + ".csv");
     }
-
-    public static void main(String[] args) {
-        SongOrganiser so = new SongOrganiser();
-    }
 }

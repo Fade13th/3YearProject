@@ -16,11 +16,15 @@ import java.util.Set;
  * Created by matt on 12/02/17.
  */
 public class SongOrganiser {
-    Map<String, TrainingSong> songMap;
+    static Map<String, TrainingSong> songMap;
 
-    public SongOrganiser() {
+    public SongOrganiser(boolean extractAll) {
         try {
-            FeatureExtractor.extractAll();
+            if (extractAll) {
+                System.out.println("Running feature extractor...");
+                FeatureExtractor.extractAll();
+                System.out.println("Features extracted");
+            }
 
             File featureDir = new File("features/default");
             Map<String, TrainingSong> songMap = new HashMap<>();
@@ -36,6 +40,7 @@ public class SongOrganiser {
             rp.pairValence();
 
             this.songMap = songMap;
+            System.out.println("Song organisation complete");
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -70,5 +75,9 @@ public class SongOrganiser {
         }
 
         return new RealMatrix[]{songData, valenceData, arousalData};
+    }
+
+    public static TrainingSong getSongData(String song) {
+        return songMap.get(song);
     }
 }

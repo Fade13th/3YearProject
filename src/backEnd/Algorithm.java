@@ -4,11 +4,10 @@ import Util.Config;
 import backEnd.algorithms.LeastSquaresRegression;
 import backEnd.algorithms.RBF;
 import backEnd.algorithms.SVM;
-import backEnd.data.Features;
-import backEnd.data.Matrix;
-import backEnd.data.VAMap;
+import backEnd.data.*;
 import backEnd.extractor.SongOrganiser;
 import backEnd.io.XMLParser;
+import libsvm.svm_model;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 
@@ -22,6 +21,10 @@ import java.util.ArrayList;
  */
 public class Algorithm {
     RealMatrix Y, arousal, valence;
+
+    RealMatrix trainData, testData;
+    RealMatrix trainVal, testVal;
+    RealMatrix trainAro, testAro;
 
     public Algorithm() {
         try {
@@ -126,7 +129,9 @@ public class Algorithm {
     }
 
     private void halfTest() throws Exception {
+        System.out.println("Setting up matrices...");
         setupMatrices();
+        System.out.println("Matrices setup");
 
         //outToMatlab(Y, valence, "valence");
         //outToMatlab(Y, arousal, "arousal");
@@ -160,19 +165,28 @@ public class Algorithm {
             }
         }
 
-        //RealMatrix vTest = SVM.selfOptimizingLinearLibSVM(Ytr, Yts, vtr);
-        //RealMatrix aTest = SVM.selfOptimizingLinearLibSVM(Ytr, Yts, atr);
+        TrainingSong testSong = SongOrganiser.getSongData("2");
 
-        RealMatrix vTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr);
+        System.out.println("Creating SVM model for valence...");
+        svm_model valenceModel = SVM.selfOptimizingLinearLibSVM(Ytr, vtr);
+        System.out.println("Testing valence model...");
+        RealMatrix vTest = SVM.testModel(testSong.getData(), valenceModel);
+
+        System.out.println("Creating SVM model for arousal...");
+        svm_model arousalModel = SVM.selfOptimizingLinearLibSVM(Ytr, atr);
+        System.out.println("Testing arousal model...");
+        RealMatrix aTest = SVM.testModel(testSong.getData(), arousalModel);
+
+        System.out.println("Valence error: " + Matrix.error(testSong.getValenceScores(), vTest));
+        System.out.println("Arousal error: " + Matrix.error(testSong.getArousalScores(), aTest));
+
+        //RealMatrix vTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr);
         //RealMatrix aTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr);
 
         //RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 10);
         //RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 10);
 
-        System.out.println("Valence error: " + Matrix.error(vts, vTest));
-        //System.out.println("Arousal error: " + Matrix.error(ats, aTest));
-
-        Graph graph = new Graph(vts, vTest, vts, vTest);
+        Graph graph = new Graph(testSong.getValenceScores(), testSong.getArousalScores(), vTest, aTest);
         graph.pack();
         graph.setVisible(true);
     }
@@ -216,15 +230,15 @@ public class Algorithm {
         //RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 50);
         //RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 50);
 
-        RealMatrix vTest = SVM.selfOptimizingLinearLibSVM(Ytr, Yts, vtr);
+        //RealMatrix vTest = SVM.selfOptimizingLinearLibSVM(Ytr, Yts, vtr);
         //RealMatrix aTest = SVM.selfOptimizingLinearLibSVM(Ytr, Yts, atr);
 
-        System.out.println("Valence error: " + Matrix.error(vts, vTest));
+        //System.out.println("Valence error: " + Matrix.error(vts, vTest));
         //System.out.println("Arousal error: " + Matrix.error(ats, aTest));
 
-        Graph graph = new Graph(vts, vTest, vts, vTest);
-        graph.pack();
-        graph.setVisible(true);
+        //Graph graph = new Graph(vts, vTest, vts, vTest);
+        //graph.pack();
+        //graph.setVisible(true);
     }
 
     private void tenFoldValidate() throws Exception {
@@ -287,7 +301,7 @@ public class Algorithm {
     }
 
     private void setupMatrices() throws Exception {
-        SongOrganiser so = new SongOrganiser();
+        SongOrganiser so = new SongOrganiser(false);
         RealMatrix[] allData = Matrix.randPerm(so.getMatrices());
 
         this.Y = allData[0];

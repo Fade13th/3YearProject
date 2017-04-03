@@ -13,6 +13,8 @@ public class Song {
     RealMatrix data;
     String name;
 
+    private static final int offset = 26;
+
     public Song(String name) {
         this.name = name;
         this.data = getDataFromCsv(new File("features/default/" + name + ".csv"));
@@ -57,9 +59,9 @@ public class Song {
 
             while ((line = in.readLine()) != null) {
                 String[] split = line.split(";");
-                double[] features = new double[f];
+                double[] features = new double[f - offset];
 
-                for (int i = 0; i < f; i++)
+                for (int i = 0; i < f - offset; i++)
                     features[i] = Double.parseDouble(split[i+2]);
 
                 if (m == null)
