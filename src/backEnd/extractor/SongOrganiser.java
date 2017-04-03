@@ -39,7 +39,15 @@ public class SongOrganiser {
             rp.pairArousal();
             rp.pairValence();
 
-            this.songMap = songMap;
+            Map<String, TrainingSong> cleanMap = new HashMap<>();
+
+            for (String name : songMap.keySet()) {
+                if (songMap.get(name).getValenceScores() != null && songMap.get(name).getArousalScores() != null) {
+                    cleanMap.put(name, songMap.get(name));
+                }
+            }
+
+            this.songMap = cleanMap;
             System.out.println("Song organisation complete");
         }
         catch (IOException e) {
@@ -79,5 +87,9 @@ public class SongOrganiser {
 
     public static TrainingSong getSongData(String song) {
         return songMap.get(song);
+    }
+
+    public Set<String> getKeys() {
+        return songMap.keySet();
     }
 }

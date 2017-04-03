@@ -6,7 +6,8 @@ import org.apache.commons.math3.linear.RealMatrix;
  * Created by matt on 12/02/17.
  */
 public class TrainingSong extends Song {
-    RealMatrix valenceScores;
+    RealMatrix valenceScores = null;
+    RealMatrix arousalScores = null;
 
     public RealMatrix getValenceScores() {
         return valenceScores;
@@ -23,8 +24,6 @@ public class TrainingSong extends Song {
     public void setArousalScores(RealMatrix arousalScores) {
         this.arousalScores = arousalScores.getSubMatrix(0, data.getRowDimension()-1, 0, 0);
     }
-
-    RealMatrix arousalScores;
 
     //The V/A data on these songs only exists between 15s and 45s
     public TrainingSong(String name) {
