@@ -14,6 +14,8 @@ import java.io.IOException;
 public class FeatureExtractor {
     private static boolean overwrite = false;
 
+    private static int maxFiles = 500;
+
     public static void extractAll() throws IOException {
         Runtime rt = Runtime.getRuntime();
 
@@ -22,9 +24,10 @@ public class FeatureExtractor {
             throw new IOException("Could not find directory containing training music files");
 
         File out = new File(Config.FEATURES + File.separator + "default");
+        int i = out.listFiles().length;
 
         for (final File file: dir.listFiles()) {
-            if (file.getName().endsWith(".wav")) {
+            if (file.getName().endsWith(".wav") && i < maxFiles) {
                 if (!overwrite && new File(out + File.separator + file.getName().substring(0, file.getName().lastIndexOf(".")) + ".csv").exists())
                     continue;
 
@@ -36,6 +39,7 @@ public class FeatureExtractor {
                 catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                i++;
             }
         }
     }

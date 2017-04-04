@@ -102,17 +102,22 @@ public class Matrix {
         return out;
     }
 
-    public static double[] normalise(double[] data) {
+    double mean = 0;
+    double stdDev = 0;
+
+    public double[] normalise(double[] data) {
         double[] result = new double[data.length];
 
-        double total = 0.0;
-        for (Double d : data) total += d;
+        if (mean == 0 && stdDev == 0) {
+            double total = 0.0;
+            for (Double d : data) total += d;
 
-        double mean = total/data.length;
-        total = 0.0;
-        for (double d : data) total += (d - mean)*(d - mean);
+            mean = total / data.length;
+            total = 0.0;
+            for (double d : data) total += (d - mean) * (d - mean);
 
-        double stdDev = total/data.length;
+            stdDev = total / data.length;
+        }
 
         for(int i = 0; i < data.length; i++) {
             result[i] = (data[i] - mean)/stdDev;
@@ -121,27 +126,29 @@ public class Matrix {
         return result;
     }
 
-    public static double[][] normalise(double[][] data) {
+    public double[][] normalise(double[][] data) {
         double[][]result = data.clone();
 
         int iMax = data.length;
         int jMax = data[0].length;
 
         for (int j = 0; j < jMax; j++) {
-            double[] column = new double[iMax];
-            double total = 0.0;
+            if (mean == 0 && stdDev == 0) {
+                double[] column = new double[iMax];
+                double total = 0.0;
 
-            for (int i = 0; i < iMax; i++) {
-                column[i] = data[i][j];
-                total += data[i][j];
-            }
-            double mean = total/column.length;
+                for (int i = 0; i < iMax; i++) {
+                    column[i] = data[i][j];
+                    total += data[i][j];
+                }
+                mean = total / column.length;
 
-            total = 0.0;
-            for(Double d : column) {
-                total += (d - mean)*(d - mean);
+                total = 0.0;
+                for (Double d : column) {
+                    total += (d - mean) * (d - mean);
+                }
+                stdDev = Math.sqrt(total / column.length);
             }
-            double stdDev = Math.sqrt(total/column.length);
 
             for (int i = 0; i < iMax; i++) {
                 if (stdDev != 0.0)
@@ -153,7 +160,7 @@ public class Matrix {
         return result;
     }
 
-    public static RealMatrix normalise(RealMatrix data) {
+    public RealMatrix normalise(RealMatrix data) {
         return new Array2DRowRealMatrix(normalise(data.getData()));
     }
 

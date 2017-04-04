@@ -20,10 +20,10 @@ public class SVM {
         param = new svm_parameter();
         param.svm_type = svm_parameter.NU_SVR;
         param.C = 1;
-        param.nu = 0.5;
-        param.kernel_type = svm_parameter.LINEAR;
-        param.gamma = 0;
-        param.cache_size = 100;
+        param.nu = 0.1;
+        param.kernel_type = svm_parameter.RBF;
+        param.gamma = 0.05;
+        param.cache_size = 100000;
         param.eps = 1e-3;
         param.shrinking = 1;
         param.probability = 0;

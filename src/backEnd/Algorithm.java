@@ -6,6 +6,7 @@ import backEnd.algorithms.RBF;
 import backEnd.algorithms.SVM;
 import backEnd.data.*;
 import backEnd.extractor.SongOrganiser;
+import backEnd.io.OutVA;
 import backEnd.io.XMLParser;
 import libsvm.svm_model;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -14,8 +15,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Matt on 2016-11-12.
@@ -23,19 +23,20 @@ import java.util.Set;
 public class Algorithm {
     RealMatrix Y, arousal, valence;
 
-    RealMatrix trainData, testData;
+    RealMatrix trainData;
+    List<TrainingSong> testSongs;
+
     RealMatrix trainVal, testVal;
     RealMatrix trainAro, testAro;
 
-    float trainPercent = 0.5f;
+    float trainPercent = 0.9f;
 
     public Algorithm() {
         try {
-            //runRegression();
-            halfTest();
-            //nineTenthTrainingTest();
-            //tenFoldValidate();
-        } catch (Exception e) {
+            SVMRun();
+            //RBFTest();
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -108,48 +109,106 @@ public class Algorithm {
         return M;
     }
 
-    private void halfTest() throws Exception {
+
+    svm_model valenceModel;
+    svm_model arousalModel;
+
+    private void SVMRun() throws Exception {
         System.out.println("Setting up matrices...");
         setupMatrices();
         System.out.println("Matrices setup");
 
-        //RealMatrix vNorm = Matrix.normalise(valence);
-        //RealMatrix aNorm = Matrix.normalise(arousal);
-
-        TrainingSong testSong = SongOrganiser.getSongData("181");
-
         System.out.println("Creating SVM model for valence...");
-        svm_model valenceModel = SVM.selfOptimizingLinearLibSVM(trainData, trainVal);
+        valenceModel = SVM.selfOptimizingLinearLibSVM(trainData, trainVal);
         System.out.println("Testing valence model...");
-        RealMatrix vTest = SVM.testModel(testSong.getData(), valenceModel);
 
         System.out.println("Creating SVM model for arousal...");
-        svm_model arousalModel = SVM.selfOptimizingLinearLibSVM(trainData, trainAro);
+        arousalModel = SVM.selfOptimizingLinearLibSVM(trainData, trainAro);
         System.out.println("Testing arousal model...");
-        RealMatrix aTest = SVM.testModel(testSong.getData(), arousalModel);
 
-        System.out.println("Valence error: " + Matrix.error(testSong.getValenceScores(), vTest));
-        System.out.println("Arousal error: " + Matrix.error(testSong.getArousalScores(), aTest));
+        float totValErr = 0;
+        float totAroErr = 0;
+        float i = 0;
 
-        //RealMatrix vTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr);
-        //RealMatrix aTest = LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr);
+        for (TrainingSong testSong : testSongs) {
+            RealMatrix vTest = SVM.testModel(testSong.getData(), valenceModel);
+            RealMatrix aTest = SVM.testModel(testSong.getData(), arousalModel);
 
-        //RealMatrix vTest = RBF.radialBasisFunctions(Ytr, Yts, vtr, 10);
-        //RealMatrix aTest = RBF.radialBasisFunctions(Ytr, Yts, atr, 10);
+            totValErr += Matrix.error(testSong.getValenceScores(), vTest);
+            totAroErr += Matrix.error(testSong.getArousalScores(), aTest);
+            i++;
 
-        Graph graph = new Graph(testSong.getValenceScores(), testSong.getArousalScores(), vTest, aTest);
-        graph.pack();
-        graph.setVisible(true);
+            OutVA.saveVA(vTest, aTest, testSong.getName());
+            /*
+            Graph graph = new Graph(testSong.getValenceScores(), testSong.getArousalScores(), vTest, aTest);
+            graph.pack();
+            graph.setVisible(true);*/
+        }
+
+        System.out.println("Valence error: " + totValErr/i);
+        System.out.println("Arousal error: " + totAroErr/i);
+    }
+
+    public void SVMTest(Song song) {
+        RealMatrix vTest = SVM.testModel(song.getData(), valenceModel);
+        RealMatrix aTest = SVM.testModel(song.getData(), arousalModel);
+
+        OutVA.saveVA(vTest, aTest, song.getName());
+    }
+
+    private void RBFTest() throws Exception {
+        System.out.println("Setting up matrices...");
+        setupMatrices();
+        System.out.println("Matrices setup");
+
+        Matrix dataM = new Matrix();
+        Matrix valM = new Matrix();
+        Matrix aroM = new Matrix();
+
+        trainData = dataM.normalise(trainData);
+        trainVal = valM.normalise(trainVal);
+        trainAro = aroM.normalise(trainAro);
+
+        RealMatrix Yts = testSongs.get(0).getData();
+
+        for (int i = 1; i < testSongs.size(); i++) {
+            Yts = Matrix.concat(Yts, testSongs.get(i).getData());
+        }
+
+        RBF rbfV = new RBF();
+        RBF rbfA = new RBF();
+
+        RealMatrix lambdaV = rbfV.radialBasisFunctions(trainData, trainVal, 100);
+        RealMatrix lambdaA = rbfA.radialBasisFunctions(trainData, trainAro, 100);
+
+        for (int i = 0; i < testSongs.size(); i++) {
+            RealMatrix vTest = rbfV.predict(valM.normalise(testSongs.get(i).getData()), lambdaV);
+            RealMatrix aTest = rbfA.predict(aroM.normalise(testSongs.get(i).getData()), lambdaA);
+
+            RealMatrix vReal = testSongs.get(i).getValenceScores();
+            RealMatrix aReal = testSongs.get(i).getArousalScores();
+
+            Graph graph = new Graph(vReal, aReal, vTest, aTest);
+            graph.pack();
+            graph.setVisible(true);
+        }
+
+
     }
 
     private void setupMatrices() throws Exception {
-        SongOrganiser so = new SongOrganiser(false);
+        SongOrganiser so = new SongOrganiser(true);
 
-        Set<String> songNames = so.getKeys();
+        Set<String> songSet = so.getKeys();
+        List<String> songNames = new ArrayList<>();
+        songNames.addAll(songSet);
+        Collections.shuffle(songNames);
 
         int trainSize = (int) Math.ceil(songNames.size() * trainPercent);
 
         int i = 0;
+
+        testSongs = new ArrayList<>();
 
         for (String name : songNames) {
             TrainingSong song = so.getSongData(name);
@@ -167,13 +226,13 @@ public class Algorithm {
                 }
             }
             else {
-                if (testData == null) {
-                    testData = song.getData();
+                testSongs.add(song);
+
+                if (testVal == null) {
                     testVal = song.getValenceScores();
                     testAro = song.getArousalScores();
                 }
                 else {
-                    testData = Matrix.concat(testData, song.getData());
                     testVal = Matrix.concat(testVal, song.getValenceScores());
                     testAro = Matrix.concat(testAro, song.getArousalScores());
                 }
@@ -195,67 +254,6 @@ public class Algorithm {
             e.printStackTrace();
         }
 
-    }
-
-    private static void runWithCsv(String filename) throws Exception {
-        RealMatrix m = Matrix.fromCsv(filename);
-
-        m = Matrix.randPerm(m);
-
-        RealMatrix Y = m.getSubMatrix(0,m.getRowDimension()-1,0,m.getColumnDimension()-2);
-        RealMatrix target = m.getColumnMatrix(m.getColumnDimension()-1);
-
-        Y = Matrix.addColumn(Y, 1.0);
-        Y = Matrix.normalise(Y);
-
-        RealMatrix tNorm = Matrix.normalise(target);
-
-        int p = Y.getColumnDimension();
-        int N = Y.getRowDimension() - (Y.getRowDimension()%10);
-
-        RealMatrix Ytr = new Array2DRowRealMatrix((9*(int)Math.floor(N/10)), p);
-        RealMatrix Yts = new Array2DRowRealMatrix((int)Math.floor(N/10), p);
-        RealMatrix ttr = new Array2DRowRealMatrix((9*(int)Math.floor(N/10)), 1);
-        RealMatrix tts = new Array2DRowRealMatrix((int)Math.floor(N/10), 1);
-
-        double totalError = 0.0;
-
-       // for (int i = 0; i < 10; i++) {
-        int i = 0;
-
-            int start = i * (int)Math.floor(N/10);
-            int end = (i+1) * (int)Math.floor(N/10);
-            int k = 0;
-
-            for (int j = 0; j < N; j++) {
-                if (j >= start && j < end) {
-                    Yts.setRow(k, Y.getRow(j));
-                    tts.setEntry(k,0,tNorm.getEntry(j,0));
-                    k++;
-                }
-                else if (j < start) {
-                    Ytr.setRow(j, Y.getRow(j));
-                    ttr.setEntry(j,0,tNorm.getEntry(j,0));
-                }
-                else {
-                    int t = j - k;
-                    Ytr.setRow(t, Y.getRow(t));
-                    ttr.setEntry(t,0,tNorm.getEntry(t,0));
-                }
-            }
-            RealMatrix predicted = RBF.radialBasisFunctions(Ytr, Yts, ttr, 10);
-            totalError += Matrix.error(tts, predicted);
-
-            //totalaError += Matrix.error(ats, LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, atr));
-            //totalvError += Matrix.error(vts, LeastSquaresRegression.leastSquaresRegression(Ytr, Yts, vtr));
-
-            Graph graph = new Graph(tts, predicted, tts, predicted);
-            graph.pack();
-            graph.setVisible(true);
-       // }
-
-        System.out.println("Average error: " + totalError);
-        //System.out.println("Average error: " + totalError/10);
     }
 
     public static void main(String[] args) {
