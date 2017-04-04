@@ -1,6 +1,8 @@
 package frontEnd;
 
 import Util.Config;
+import backEnd.Algorithm;
+import backEnd.extractor.ChromaExtractor;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.GLProfile;
@@ -28,14 +30,22 @@ import java.util.TimerTask;
  */
 public class GUI {
 
-    static GUIPanel guiPanel;
-    static GLCanvas glCanvas;
+    GUIPanel guiPanel;
+    GLCanvas glCanvas;
 
-    static boolean songLoaded = false;
+    boolean songLoaded = false;
 
-    static Timer t= new Timer();
+    Timer t= new Timer();
 
-    public static void main( String [] args ) {
+    Algorithm algorithm;
+
+    public void setup(Algorithm algorithm) {
+        this.algorithm = algorithm;
+
+        setup();
+    }
+
+    public void setup() {
         Config.init();
         ColourMapping.init();
 
@@ -91,7 +101,7 @@ public class GUI {
         jframe.setVisible( true );
     }
 
-    private static JPanel setupPlayOptions() {
+    private JPanel setupPlayOptions() {
         JPanel panel = new JPanel();
         panel.setLayout(new GridLayout(1, 3));
 
@@ -134,7 +144,7 @@ public class GUI {
         return panel;
     }
 
-    private static JMenuBar setupMenu() {
+    private JMenuBar setupMenu() {
         JMenuBar menu = new JMenuBar();
 
         JMenu fileMenu = new JMenu("File");
@@ -205,7 +215,7 @@ public class GUI {
         return menu;
     }
 
-    private static void setPanelType(Panels type) {
+    private void setPanelType(Panels type) {
         switch (type) {
             case BAR_PANEL:
                 guiPanel = new BarPanel();
@@ -229,20 +239,7 @@ public class GUI {
         }
     }
 
-    private static void extractChroma(String fileName) throws IOException {
-        Runtime rt = Runtime.getRuntime();
-
-        Process pr = rt.exec("./openSMILE-2.1.0/SMILExtract -C " + Config.CHROMA_CONFIG + " -I "
-                + fileName + " -O " + Config.CHRMOA + File.separator + fileName.substring(fileName.lastIndexOf(File.separator), fileName.lastIndexOf(".")) + ".csv");
-        try {
-            pr.waitFor();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void loadSong(File songFile) throws FileNotFoundException {
+    private void loadSong(File songFile) throws FileNotFoundException {
         songLoaded = false;
 
         t.cancel();
@@ -257,16 +254,16 @@ public class GUI {
         File chroma = new File(Config.CHRMOA + File.separator + name + ".csv");
 
         if (!va.exists()) {
-            throw new FileNotFoundException("Song has not been through valence arousal analysis");
+            if (algorithm == null) {
+                throw new FileNotFoundException("Song has not been through valence arousal analysis");
+            }
+            else {
+                algorithm.SVMTest(name);
+            }
         }
 
         if (!chroma.exists()) {
-            try {
-                extractChroma(songFile.getAbsolutePath());
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
+            ChromaExtractor.extractChroma(songFile);
         }
 
         ArrayList<ArrayList<Float>> song = loadChroma(chroma);
@@ -311,11 +308,11 @@ public class GUI {
         songLoaded = true;
     }
 
-    private static ArrayList<ArrayList<Float>> loadChroma(File file) throws FileNotFoundException {
+    private ArrayList<ArrayList<Float>> loadChroma(File file) throws FileNotFoundException {
         ArrayList<ArrayList<Float>> song = new ArrayList<>();
 
         if (!file.exists()) {
-            throw new FileNotFoundException("Chroma features for file "  + file.getName() + " not found");
+            ChromaExtractor.extractChroma(file);
         }
 
         try {
@@ -345,7 +342,7 @@ public class GUI {
         return song;
     }
 
-    private static ArrayList<ArrayList<Float>> loadVA(File file) throws FileNotFoundException {
+    private ArrayList<ArrayList<Float>> loadVA(File file) throws FileNotFoundException {
         ArrayList<ArrayList<Float>> song = new ArrayList<>();
 
         if (!file.exists()) {

@@ -149,7 +149,9 @@ public class Algorithm {
         System.out.println("Arousal error: " + totAroErr/i);
     }
 
-    public void SVMTest(Song song) {
+    public void SVMTest(String songName) {
+        Song song = new Song(songName);
+
         RealMatrix vTest = SVM.testModel(song.getData(), valenceModel);
         RealMatrix aTest = SVM.testModel(song.getData(), arousalModel);
 
@@ -254,16 +256,5 @@ public class Algorithm {
             e.printStackTrace();
         }
 
-    }
-
-    public static void main(String[] args) {
-        Config.init();
-        new Algorithm();
-        /*
-        try {
-            runWithCsv("housing.data");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
     }
 }
