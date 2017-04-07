@@ -22,7 +22,7 @@ public abstract class GUIPanel {
     public static ArrayList<Float> values;
     public static EmotionColour colour;
 
-    public static void setup(GL2 gl2, int width, int height ) {
+    public static void setup(GL2 gl2, int width, int height) {
         previousColours = new ArrayList<>();
         previousValues = new ArrayList<>();
 
@@ -39,10 +39,24 @@ public abstract class GUIPanel {
         gl2.glViewport( 0, 0, width, height );
     }
 
-    public static void clear(GL2 gl2) {
+    public static void clear(GL2 gl2,int screenWidth, int screenHeight) {
         Colour bg = averageBackground();
-        gl2.glClearColor(bg.R, bg.G, bg.B, 1.0f);
-        gl2.glClear(GL.GL_COLOR_BUFFER_BIT);
+
+        gl2.glBegin(GL.GL_TRIANGLES);
+        gl2.glColor4f(bg.R, bg.G, bg.B, 1.0f);
+
+        gl2.glVertex2f(0,0);
+        gl2.glVertex2f(0, screenHeight);
+        gl2.glVertex2f(screenWidth, screenHeight);
+
+        gl2.glVertex2f(screenWidth, screenHeight);
+        gl2.glVertex2f(0, 0);
+        gl2.glVertex2f(screenWidth, 0);
+
+        gl2.glEnd();
+
+        //gl2.glClearColor(bg.R, bg.G, bg.B, 1.0f);
+        //gl2.glClear(GL.GL_COLOR_BUFFER_BIT);
     }
 
     public static void clearPrevious() {
